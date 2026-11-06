@@ -45,21 +45,25 @@ class TaskUpdate(BaseModel):
 
 ########################## ENDPOINTS ##########################
 
+"""Describe this API."""
 @app.get("/")
 def root():
     return {"name": "Task API", "version": "1.0", "endpoints": ["/tasks"]}
 
 
+"""Check if the API is running."""
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
 
+"""List all tasks."""
 @app.get("/tasks")
 def list_tasks():
     return tasks
 
 
+"""Return one task, or 404 if it does not exist."""
 @app.get("/tasks/{task_id}")
 def get_task(task_id: int):
     task = find_task(task_id)
@@ -68,6 +72,7 @@ def get_task(task_id: int):
     return task
 
 
+"""Create a task. Title is required."""
 @app.post("/tasks", status_code=201)
 def create_task(body: TaskCreate):
     global next_id
@@ -80,7 +85,7 @@ def create_task(body: TaskCreate):
     return new_task
 
 
-
+"""Update the title and/or done flag of a task."""
 @app.put("/tasks/{task_id}")
 def update_task(task_id: int, body: TaskUpdate):
     task = find_task(task_id)
@@ -97,6 +102,7 @@ def update_task(task_id: int, body: TaskUpdate):
     return task
 
 
+"""Delete a task."""
 @app.delete("/tasks/{task_id}", status_code=204)
 def delete_task(task_id: int):
     task = find_task(task_id)
