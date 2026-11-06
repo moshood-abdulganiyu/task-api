@@ -37,6 +37,12 @@ async def handle_validation_error(request: Request, exc: RequestValidationError)
 class TaskCreate(BaseModel):
     title: str
 
+
+class TaskUpdate(BaseModel):
+    title: str | None = None
+    done: bool | None = None
+
+
 ########################## ENDPOINTS ##########################
 
 @app.get("/")
@@ -62,7 +68,6 @@ def get_task(task_id: int):
     return task
 
 
-
 @app.post("/tasks", status_code=201)
 def create_task(body: TaskCreate):
     global next_id
@@ -73,3 +78,29 @@ def create_task(body: TaskCreate):
     next_id += 1
     tasks.append(new_task)
     return new_task
+
+
+
+@app.put("/tasks/{task_id}")
+def update_task(task_id: int, body: TaskUpdate):
+    task = find_task(task_id)
+    if task is None:
+        return error(404, f"Task {task_id} not found")
+    if body.title is None and body.done is None:
+        return error(400, "send at least one of: title, done")
+    if body.title is not None:
+        if body.title.strip() == "":
+            return error(400, "title must not be empty")
+        task["title"] = body.title.strip()
+    if body.done is not None:
+        task["done"] = body.done
+    return task
+
+
+@app.delete("/tasks/{task_id}", status_code=204)
+def delete_task(task_id: int):
+    task = find_task(task_id)
+    if task is None:
+        return error(404, f"Task {task_id} not found")
+    tasks.remove(task)
+    return Response(status_code=204)
