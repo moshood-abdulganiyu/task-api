@@ -61,22 +61,16 @@ def health():
     """Check if the API is running."""
     return {"status": "ok"}
 
-
 @app.get("/tasks")
-def list_tasks(done: bool | None = None, search: str | None = None):
-    """Return tasks. Optional filters: ?done=true and ?search=word."""
-    result = tasks
-    if done is not None:
-        result = [t for t in result if t["done"] == done]
-    if search is not None:
-        result = [t for t in result if search.lower() in t["title"].lower()]
-    return result
+def list_tasks():
+    """Return every task."""
+    return db.get_all_tasks()
 
 
 @app.get("/tasks/{task_id}")
 def get_task(task_id: int):
     """Return one task, or 404 if it does not exist."""
-    task = find_task(task_id)
+    task = db.get_task(task_id)
     if task is None:
         return error(404, f"Task {task_id} not found")
     return task

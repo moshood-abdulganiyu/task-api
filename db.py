@@ -44,3 +44,22 @@ def init_db():
                 "INSERT INTO tasks (title, done) VALUES (?, ?)", SEED_TASKS
             )
 
+
+def row_to_task(row):
+    return {"id": row["id"], "title": row["title"], "done": bool(row["done"])}
+
+
+def get_all_tasks():
+    with connection() as conn:
+        rows = conn.execute("SELECT * FROM tasks ORDER BY id").fetchall()
+        return [row_to_task(row) for row in rows]
+
+
+def get_task(task_id):
+    with connection() as conn:
+        row = conn.execute(
+            "SELECT * FROM tasks WHERE id = ?", (task_id,)
+        ).fetchone()
+        if row is None:
+            return None
+        return row_to_task(row)
