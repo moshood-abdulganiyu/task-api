@@ -76,3 +76,16 @@ def create_task(title):
         return row_to_task(row)
 
 
+def update_task(task_id, title, done):
+    with connection() as conn:
+        conn.execute(
+            "UPDATE tasks SET title = ?, done = ? WHERE id = ?",
+            (title, int(done), task_id),
+        )
+    return get_task(task_id)
+
+
+def delete_task(task_id):
+    with connection() as conn:
+        cursor = conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+        return cursor.rowcount > 0

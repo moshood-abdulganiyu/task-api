@@ -7,26 +7,8 @@ import db
 app = FastAPI(title="Task API", version="1.0")
 db.init_db()
 
-def seed_tasks():
-    return [
-        {"id": 1, "title": "Learn what an API is", "done": True},
-        {"id": 2, "title": "Build my first endpoint", "done": False},
-        {"id": 3, "title": "Push my code to GitHub", "done": False},
-    ]
-
-
-tasks = seed_tasks()
-next_id = 4
-
 
 ########################## HELPERS ##########################
-
-def find_task(task_id: int):
-    for task in tasks:
-        if task["id"] == task_id:
-            return task
-    return None
-
 
 def error(status_code: int, message: str):
     return JSONResponse(status_code=status_code, content={"error": message})
@@ -89,28 +71,31 @@ def create_task(body: TaskCreate):
 @app.put("/tasks/{task_id}")
 def update_task(task_id: int, body: TaskUpdate):
     """Update the title and/or done flag of a task."""
-    task = find_task(task_id)
+    task = db.get_task(task_id)
     if task is None:
         return error(404, f"Task {task_id} not found")
     if body.title is None and body.done is None:
         return error(400, "send at least one of: title, done")
+
+    new_title = task["title"]
+    new_done = task["done"]
     if body.title is not None:
         if body.title.strip() == "":
             return error(400, "title must not be empty")
-        task["title"] = body.title.strip()
+        new_title = body.title.strip()
     if body.done is not None:
-        task["done"] = body.done
-    return task
+        new_done = body.done
+
+    return db.update_task(task_id, new_title, new_done)
 
 
 @app.delete("/tasks/{task_id}", status_code=204)
 def delete_task(task_id: int):
     """Delete a task."""
-    task = find_task(task_id)
-    if task is None:
+    if not db.delete_task(task_id):
         return error(404, f"Task {task_id} not found")
-    tasks.remove(task)
     return Response(status_code=204)
+
 
 
 @app.get("/stats")
