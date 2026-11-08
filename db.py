@@ -63,3 +63,16 @@ def get_task(task_id):
         if row is None:
             return None
         return row_to_task(row)
+
+
+def create_task(title):
+    with connection() as conn:
+        cursor = conn.execute(
+            "INSERT INTO tasks (title, done) VALUES (?, ?)", (title, 0)
+        )
+        row = conn.execute(
+            "SELECT * FROM tasks WHERE id = ?", (cursor.lastrowid,)
+        ).fetchone()
+        return row_to_task(row)
+
+

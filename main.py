@@ -61,6 +61,7 @@ def health():
     """Check if the API is running."""
     return {"status": "ok"}
 
+
 @app.get("/tasks")
 def list_tasks():
     """Return every task."""
@@ -79,14 +80,10 @@ def get_task(task_id: int):
 @app.post("/tasks", status_code=201)
 def create_task(body: TaskCreate):
     """Create a task. Title is required."""
-    global next_id
     title = body.title.strip()
     if title == "":
         return error(400, "title must not be empty")
-    new_task = {"id": next_id, "title": title, "done": False}
-    next_id += 1
-    tasks.append(new_task)
-    return new_task
+    return db.create_task(title)
 
 
 @app.put("/tasks/{task_id}")
