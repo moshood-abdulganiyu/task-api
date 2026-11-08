@@ -43,3 +43,12 @@ http://localhost:8000/docs.
 ## Notes
 
 Data is stored in memory only, so it resets whenever the server restarts.
+
+
+## SQL I ran by hand
+
+    SELECT COUNT(*) FROM tasks WHERE done = 1;
+
+This returned `1`: the number of completed tasks in the table.
+
+![DB Browser showing tasks.db](docs/db-browser.png)
