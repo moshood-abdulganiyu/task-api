@@ -98,20 +98,20 @@ def delete_task(task_id: int):
 
 
 
-@app.get("/stats")
-def stats():
-    """Return counts of total, done and open tasks."""
-    total = len(tasks)
-    done = sum(1 for t in tasks if t["done"])
-    return {"total": total, "done": done, "open": total - done}
+# @app.get("/stats")
+# def stats():
+#     """Return counts of total, done and open tasks."""
+#     total = len(tasks)
+#     done = sum(1 for t in tasks if t["done"])
+#     return {"total": total, "done": done, "open": total - done}
 
 
-@app.post("/reset")
-def reset():
-    """Restore the 3 example tasks."""
-    global next_id
-    tasks.clear()
-    tasks.extend(seed_tasks())
-    next_id = 4
-    return {"status": "reset"}
+# @app.post("/reset")
+# def reset():
+#     """Restore the 3 example tasks."""
+#     global next_id
+#     tasks.clear()
+#     tasks.extend(seed_tasks())
+#     next_id = 4
+#     return {"status": "reset"}
 
