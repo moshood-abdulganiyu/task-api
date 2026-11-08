@@ -2,9 +2,10 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel 
 from fastapi.exceptions import RequestValidationError
-
+import db
 
 app = FastAPI(title="Task API", version="1.0")
+db.init_db()
 
 def seed_tasks():
     return [
@@ -48,15 +49,16 @@ class TaskUpdate(BaseModel):
 
 ########################## ENDPOINTS ##########################
 
-"""Describe this API."""
+
 @app.get("/")
 def root():
+    """Describe this API."""
     return {"name": "Task API", "version": "1.0", "endpoints": ["/tasks"]}
 
 
-"""Check if the API is running."""
 @app.get("/health")
 def health():
+    """Check if the API is running."""
     return {"status": "ok"}
 
 
