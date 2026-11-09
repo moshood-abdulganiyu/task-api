@@ -45,9 +45,9 @@ def health():
 
 
 @app.get("/tasks")
-def list_tasks():
-    """Return every task."""
-    return db.get_all_tasks()
+def list_tasks(done: bool | None = None, search: str | None = None, sort: str | None = None):
+    """Return tasks. Filters: ?done=true, ?search=word, ?sort=title."""
+    return db.get_all_tasks(done, search, sort)
 
 
 @app.get("/tasks/{task_id}")
@@ -97,21 +97,8 @@ def delete_task(task_id: int):
     return Response(status_code=204)
 
 
-
-# @app.get("/stats")
-# def stats():
-#     """Return counts of total, done and open tasks."""
-#     total = len(tasks)
-#     done = sum(1 for t in tasks if t["done"])
-#     return {"total": total, "done": done, "open": total - done}
-
-
-# @app.post("/reset")
-# def reset():
-#     """Restore the 3 example tasks."""
-#     global next_id
-#     tasks.clear()
-#     tasks.extend(seed_tasks())
-#     next_id = 4
-#     return {"status": "reset"}
+@app.get("/stats")
+def stats():
+    """Return counts of total, done and open tasks."""
+    return db.get_stats()
 

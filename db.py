@@ -34,7 +34,9 @@ def init_db():
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title TEXT NOT NULL,
-                done INTEGER NOT NULL DEFAULT 0
+                done INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
             """
         )
@@ -79,7 +81,7 @@ def create_task(title):
 def update_task(task_id, title, done):
     with connection() as conn:
         conn.execute(
-            "UPDATE tasks SET title = ?, done = ? WHERE id = ?",
+            "UPDATE tasks SET title = ?, done = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
             (title, int(done), task_id),
         )
     return get_task(task_id)
@@ -89,3 +91,33 @@ def delete_task(task_id):
     with connection() as conn:
         cursor = conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
         return cursor.rowcount > 0
+
+
+def get_all_tasks(done=None, search=None, sort=None):
+    query = "SELECT * FROM tasks"
+    clauses = []
+    params = []
+    if done is not None:
+        clauses.append("done = ?")
+        params.append(int(done))
+    if search is not None:
+        clauses.append("title LIKE ?")
+        params.append(f"%{search}%")
+    if clauses:
+        query += " WHERE " + " AND ".join(clauses)
+    query += " ORDER BY title" if sort == "title" else " ORDER BY id"
+    with connection() as conn:
+        rows = conn.execute(query, params).fetchall()
+        return [row_to_task(row) for row in rows]
+
+
+def get_stats():
+    with connection() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS total, COALESCE(SUM(done), 0) AS done FROM tasks"
+        ).fetchone()
+        return {
+            "total": row["total"],
+            "done": row["done"],
+            "open": row["total"] - row["done"],
+        }
