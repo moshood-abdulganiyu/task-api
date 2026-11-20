@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, Header
+from fastapi import Depends, FastAPI, Header, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -43,6 +43,20 @@ def extract_token(authorization: str | None):
 class Credentials(BaseModel):
     email: str | None = None
     password: str | None = None
+
+
+class Unauthorized(Exception):
+    def __init__(self, message: str):
+        self.message = message
+
+
+@app.exception_handler(Unauthorized)
+async def handle_unauthorized(request: Request, exc: Unauthorized):
+    return JSONResponse(
+        status_code=401,
+        content={"error": exc.message},
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 get_supabase()
@@ -96,26 +110,53 @@ def public_info():
 
 # @app.get("/protected/profile")
 # def profile(authorization: str | None = Header(default=None)):
-#     """Needs a bearer token (not yet verified)."""
+#     """Return the logged-in user's safe details."""
 #     token = extract_token(authorization)
 #     if token is None:
 #         return error(401, "Access token required")
-#     return {"message": "A token was presented (not verified yet)"}
+#     try:
+#         result = get_supabase().auth.get_user(token)
+#         user = result.user if result else None
+#     except Exception:
+#         user = None
+#     if user is None:
+#         return error(401, "Invalid or expired token")
+#     return {"id": user.id, "email": user.email, "created_at": user.created_at}
 
 
-@app.get("/protected/profile")
-def profile(authorization: str | None = Header(default=None)):
-    """Return the logged-in user's safe details."""
+def get_token(authorization: str | None = Header(default=None)) -> str:
     token = extract_token(authorization)
     if token is None:
-        return error(401, "Access token required")
+        raise Unauthorized("Access token required")
+    return token
+
+
+def get_current_user(token: str = Depends(get_token)):
     try:
         result = get_supabase().auth.get_user(token)
         user = result.user if result else None
     except Exception:
         user = None
     if user is None:
-        return error(401, "Invalid or expired token")
+        raise Unauthorized("Invalid or expired token")
+    return user
+
+
+
+@app.get("/protected/profile")
+def profile(user=Depends(get_current_user)):
+    """Return the logged-in user's safe details."""
     return {"id": user.id, "email": user.email, "created_at": user.created_at}
 
 
+@app.get("/protected/dashboard")
+def dashboard(user=Depends(get_current_user)):
+    """A second protected route, reusing the same guard."""
+    return {"message": f"Welcome to your dashboard, {user.email}"}
+
+
+@app.post("/auth/logout", status_code=204)
+def logout(token: str = Depends(get_token), user=Depends(get_current_user)):
+    """End this session."""
+    get_supabase().auth.admin.sign_out(token, "local")
+    return Response(status_code=204)
