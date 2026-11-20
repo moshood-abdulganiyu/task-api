@@ -94,12 +94,28 @@ def public_info():
     return {"message": "Welcome stranger! This info is public."}
 
 
+# @app.get("/protected/profile")
+# def profile(authorization: str | None = Header(default=None)):
+#     """Needs a bearer token (not yet verified)."""
+#     token = extract_token(authorization)
+#     if token is None:
+#         return error(401, "Access token required")
+#     return {"message": "A token was presented (not verified yet)"}
+
+
 @app.get("/protected/profile")
 def profile(authorization: str | None = Header(default=None)):
-    """Needs a bearer token (not yet verified)."""
+    """Return the logged-in user's safe details."""
     token = extract_token(authorization)
     if token is None:
         return error(401, "Access token required")
-    return {"message": "A token was presented (not verified yet)"}
+    try:
+        result = get_supabase().auth.get_user(token)
+        user = result.user if result else None
+    except Exception:
+        user = None
+    if user is None:
+        return error(401, "Invalid or expired token")
+    return {"id": user.id, "email": user.email, "created_at": user.created_at}
 
 
