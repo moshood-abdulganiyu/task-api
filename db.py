@@ -40,8 +40,19 @@ def init_db():
                 )
 
 
-get_all_tasks = db_sqlite.get_all_tasks
-get_task = db_sqlite.get_task
+# def get_all_tasks():
+def get_all_tasks(done=None, search=None, sort=None):
+    with connection() as conn:
+        return conn.execute("SELECT * FROM tasks ORDER BY id").fetchall()
+
+
+def get_task(task_id):
+    with connection() as conn:
+        return conn.execute(
+            "SELECT * FROM tasks WHERE id = %s", (task_id,)
+        ).fetchone()
+
+    
 create_task = db_sqlite.create_task
 update_task = db_sqlite.update_task
 delete_task = db_sqlite.delete_task
