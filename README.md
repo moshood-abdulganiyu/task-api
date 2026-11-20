@@ -96,3 +96,8 @@ SELECT COUNT(*) FROM tasks WHERE done = 1;>>
 
 <<FILL IN: two sentences in your own words. What happened when you added the
 new columns to an existing table, and why migrations exist.>>
+
+
+## Run Postgres (Stages 0-3)
+
+    docker run --name taskdb -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=tasks -p 5432:5432 -v taskdata:/var/lib/postgresql/data -d postgres:17
