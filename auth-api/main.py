@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Header
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -30,6 +30,16 @@ async def handle_validation_error(request: Request, exc: RequestValidationError)
     return error(400, f"Invalid request - {where}: {first['msg']}")
 
 
+def extract_token(authorization: str | None):
+    """Return the token from 'Authorization: Bearer <token>', or None."""
+    if not authorization:
+        return None
+    parts = authorization.split()
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        return None
+    return parts[1]
+
+
 class Credentials(BaseModel):
     email: str | None = None
     password: str | None = None
@@ -56,7 +66,6 @@ def signup(body: Credentials):
     return {"id": user.id, "email": user.email, "created_at": user.created_at}
 
 
-
 @app.post("/auth/login")
 def login(body: Credentials):
     """Log in and receive an access token and a refresh token."""
@@ -78,5 +87,19 @@ def login(body: Credentials):
         "expires_in": session.expires_in,
     }
 
+
+@app.get("/public/info")
+def public_info():
+    """Open to everyone."""
+    return {"message": "Welcome stranger! This info is public."}
+
+
+@app.get("/protected/profile")
+def profile(authorization: str | None = Header(default=None)):
+    """Needs a bearer token (not yet verified)."""
+    token = extract_token(authorization)
+    if token is None:
+        return error(401, "Access token required")
+    return {"message": "A token was presented (not verified yet)"}
 
 
