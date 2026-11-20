@@ -4,8 +4,6 @@ import psycopg
 from dotenv import load_dotenv
 from psycopg.rows import dict_row
 
-import db_sqlite
-
 load_dotenv()
 DATABASE_URL = os.environ["DATABASE_URL"]
 
@@ -21,7 +19,6 @@ def connection():
 
 
 def init_db():
-    db_sqlite.init_db()
     with connection() as conn:
         conn.execute(
             """
@@ -53,6 +50,23 @@ def get_task(task_id):
         ).fetchone()
 
     
-create_task = db_sqlite.create_task
-update_task = db_sqlite.update_task
-delete_task = db_sqlite.delete_task
+def create_task(title):
+    with connection() as conn:
+        return conn.execute(
+            "INSERT INTO tasks (title, done) VALUES (%s, %s) RETURNING *",
+            (title, False),
+        ).fetchone()
+
+
+def update_task(task_id, title, done):
+    with connection() as conn:
+        return conn.execute(
+            "UPDATE tasks SET title = %s, done = %s WHERE id = %s RETURNING *",
+            (title, done, task_id),
+        ).fetchone()
+
+
+def delete_task(task_id):
+    with connection() as conn:
+        cursor = conn.execute("DELETE FROM tasks WHERE id = %s", (task_id,))
+        return cursor.rowcount > 0
